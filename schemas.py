@@ -2,38 +2,16 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-class UploadedFileBase(BaseModel):
-    session_id: str
-    user_id: str
-    file_name: str
-    file_size: int
-    file_type: str
-    gemini_file_uri: str
-    gemini_file_id: str
-    file_search_store_id: str
-
-class UploadedFileCreate(UploadedFileBase):
-    pass
-
-class UploadedFileResponse(UploadedFileBase):
-    id: int
-    uploaded_at: datetime
-    status: str = "indexed"
-
-    class Config:
-        from_attributes = True
-
-class SessionFilesResponse(BaseModel):
-    session_id: str
-    file_count: int
-    files: List[UploadedFileResponse]
+class RAGConfig(BaseModel):
+    store_name: Optional[str] = None
 
 class ContentGenerationRequest(BaseModel):
-    session_id: str
-    user_id: str
+    session_id: Optional[str] = None # Optional for logging
+    user_id: Optional[str] = None # Optional for logging
     prompt: str
     slide_type: str
     context: Dict[str, Any] = {}
+    rag_config: Optional[RAGConfig] = None
 
 class CitationChunk(BaseModel):
     content: str

@@ -3,14 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from .database import engine, Base
-from .routers import files, content
+from .routers import content
 
 # Load environment variables
 load_dotenv()
-
-# Create database tables
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Deckster Backend File Service",
@@ -28,7 +24,6 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(files.router)
 app.include_router(content.router)
 
 @app.get("/")

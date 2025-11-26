@@ -1,11 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException
 from datetime import datetime
 import json
 import re
 
-from ..database import get_db
-from ..models import UploadedFile, FileSearchStore
 from ..schemas import ContentGenerationRequest, ContentGenerationResponse
 from ..services import gemini
 
@@ -15,10 +12,7 @@ router = APIRouter(
 )
 
 def parse_slide_content(text: str, slide_type: str):
-    # Basic parsing logic - in a real app this would be more robust or use structured output
-    # For now, we'll try to extract JSON if present, or return text structure
     try:
-        # Find JSON block
         match = re.search(r"```json\n(.*?)\n```", text, re.DOTALL)
         if match:
             return json.loads(match.group(1))
@@ -26,7 +20,7 @@ def parse_slide_content(text: str, slide_type: str):
     except:
         return {"raw_text": text}
 
-def extract_citations(response, files):
+def extract_citations(response):
     citations = []
     if not response.candidates:
         return citations
@@ -37,61 +31,39 @@ def extract_citations(response, files):
         
     grounding_metadata = candidate.grounding_metadata
     
-    # Map chunks to files
-    # Note: Gemini 2.0 Flash grounding metadata structure might differ slightly from 1.5
-    # We will implement a best-effort mapping based on available fields
-    
     if hasattr(grounding_metadata, 'grounding_chunks'):
         for chunk in grounding_metadata.grounding_chunks:
-            # This is a simplification. Real mapping requires matching indices.
-            # For now, we'll just return the content.
             citations.append({
-                "file_name": "Unknown", # improved mapping needed
+                "file_name": "Unknown", 
                 "file_uri": "Unknown",
                 "chunks": [{
                     "content": chunk.web.title if hasattr(chunk, 'web') and chunk.web else "Content from file",
-                    "confidence": 0.9 # Placeholder
+                    "confidence": 0.9 
                 }]
             })
             
     return citations
 
 @router.post("/generate", response_model=ContentGenerationResponse)
-async def generate_content(
-    request: ContentGenerationRequest,
-    db: Session = Depends(get_db)
-):
-    # 1. Check if files exist for session
-    files = db.query(UploadedFile).filter_by(session_id=request.session_id).all()
-
-    if files and len(files) > 0:
-        # RAG-based generation
+async def generate_content(request: ContentGenerationRequest):
+    # Check if store_name is provided for RAG
+    if request.rag_config and request.rag_config.store_name:
         try:
-            # Get File Search store for session
-            store = db.query(FileSearchStore).filter_by(session_id=request.session_id).first()
-
-            if not store:
-                # Should not happen if files exist, but handle gracefully
-                raise ValueError("Store not found")
-
             # Generate content with File Search
             response = gemini.generate_content_with_rag(
                 prompt=request.prompt,
                 context=request.context,
-                store_name=store.gemini_store_name
+                store_name=request.rag_config.store_name
             )
 
-            # Parse response
             content = parse_slide_content(response.text, request.slide_type)
-
-            # Extract citations
-            citations = extract_citations(response, files)
+            citations = extract_citations(response)
 
             return {
                 "content": content,
                 "grounding": {
                     "used_files": True,
-                    "file_count": len(files),
+                    "file_count": 0, # We don't know the count without querying the store, which is fine
                     "citations": citations
                 },
                 "generated_at": datetime.utcnow(),
@@ -100,11 +72,10 @@ async def generate_content(
             }
 
         except Exception as e:
-            # Fallback to standard generation on error
             print(f"RAG generation failed: {e}. Falling back to standard LLM.")
             pass
 
-    # Fallback: Standard LLM generation (no files)
+    # Fallback or Standard LLM generation
     try:
         response = gemini.generate_content_standard(
             prompt=request.prompt,
