@@ -14,6 +14,15 @@ def test_root():
     except Exception as e:
         print(f"Failed: {e}")
 
+def test_health():
+    print("\nTesting Health Check...")
+    try:
+        response = requests.get(f"{BASE_URL}/health")
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.json()}")
+    except Exception as e:
+        print(f"Failed: {e}")
+
 def test_generate_content():
     print("\nTesting Content Generation...")
     try:
@@ -36,6 +45,7 @@ def test_generate_content():
 
 if __name__ == "__main__":
     test_root()
+    test_health()
     # Note: Generate test requires a running server and valid Google Cloud credentials.
     # Uncomment to run if server is active.
     # test_generate_content()

@@ -28,7 +28,11 @@ app.include_router(content.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Deckster Backend File Service is running"}
+    return {"message": "Deckster Backend File Service is running", "status": "ok"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 
 if __name__ == "__main__":
     import uvicorn
