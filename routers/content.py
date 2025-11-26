@@ -3,8 +3,8 @@ from datetime import datetime
 import json
 import re
 
-from ..schemas import ContentGenerationRequest, ContentGenerationResponse
-from ..services import gemini
+from schemas import ContentGenerationRequest, ContentGenerationResponse
+from services import gemini
 
 router = APIRouter(
     prefix="/api/v1/content",
