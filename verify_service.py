@@ -17,14 +17,15 @@ def test_root():
 def test_generate_content():
     print("\nTesting Content Generation...")
     try:
-        # Note: This test assumes you have a valid store_name if you want to test RAG.
-        # Otherwise it tests the standard LLM fallback.
+        # New payload format
         payload = {
-            "prompt": "Summarize the document",
-            "slide_type": "text",
-            "context": {},
-            "rag_config": {
-                # "store_name": "projects/..." # Uncomment and set to test RAG
+            "type": "user_message",
+            "data": {
+                "text": "Summarize the document",
+                "store_name": None, # Set to "projects/..." to test RAG
+                "file_count": 0,
+                "slide_type": "text",
+                "context": {}
             }
         }
         response = requests.post(f"{BASE_URL}/api/v1/content/generate", json=payload)

@@ -46,24 +46,26 @@ def extract_citations(response):
 
 @router.post("/generate", response_model=ContentGenerationResponse)
 async def generate_content(request: ContentGenerationRequest):
+    data = request.data
+    
     # Check if store_name is provided for RAG
-    if request.rag_config and request.rag_config.store_name:
+    if data.store_name:
         try:
             # Generate content with File Search
             response = gemini.generate_content_with_rag(
-                prompt=request.prompt,
-                context=request.context,
-                store_name=request.rag_config.store_name
+                prompt=data.text,
+                context=data.context or {},
+                store_name=data.store_name
             )
 
-            content = parse_slide_content(response.text, request.slide_type)
+            content = parse_slide_content(response.text, data.slide_type or "text")
             citations = extract_citations(response)
 
             return {
                 "content": content,
                 "grounding": {
                     "used_files": True,
-                    "file_count": 0, # We don't know the count without querying the store, which is fine
+                    "file_count": data.file_count or 0,
                     "citations": citations
                 },
                 "generated_at": datetime.utcnow(),
@@ -78,11 +80,11 @@ async def generate_content(request: ContentGenerationRequest):
     # Fallback or Standard LLM generation
     try:
         response = gemini.generate_content_standard(
-            prompt=request.prompt,
-            context=request.context
+            prompt=data.text,
+            context=data.context or {}
         )
 
-        content = parse_slide_content(response.text, request.slide_type)
+        content = parse_slide_content(response.text, data.slide_type or "text")
 
         return {
             "content": content,

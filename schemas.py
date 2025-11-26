@@ -1,17 +1,18 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-class RAGConfig(BaseModel):
+class MessageData(BaseModel):
+    text: str
     store_name: Optional[str] = None
+    file_count: Optional[int] = 0
+    # Keeping these as optional in case they are still sent or needed for the logic
+    slide_type: Optional[str] = "text" 
+    context: Optional[Dict[str, Any]] = {}
 
 class ContentGenerationRequest(BaseModel):
-    session_id: Optional[str] = None # Optional for logging
-    user_id: Optional[str] = None # Optional for logging
-    prompt: str
-    slide_type: str
-    context: Dict[str, Any] = {}
-    rag_config: Optional[RAGConfig] = None
+    type: str
+    data: MessageData
 
 class CitationChunk(BaseModel):
     content: str
