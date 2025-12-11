@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 
-from routers import content, file_rag, web_search
+from routers import content, file_rag, web_search, upload
 
 # Load environment variables
 load_dotenv()
@@ -45,6 +45,7 @@ app.add_middleware(
 app.include_router(content.router)       # Legacy endpoint (backward compatibility)
 app.include_router(file_rag.router)      # File RAG endpoints (v2.0)
 app.include_router(web_search.router)    # Web Search endpoints (v2.0)
+app.include_router(upload.router)        # Upload endpoints (v2.0)
 
 
 @app.get("/")
@@ -84,6 +85,23 @@ async def root():
                     "path": "/api/v1/content/generate",
                     "method": "POST",
                     "description": "Legacy content generation (backward compatible)"
+                }
+            },
+            "upload": {
+                "create_store": {
+                    "path": "/api/v1/upload/store/create",
+                    "method": "POST",
+                    "description": "Create a file store for uploads"
+                },
+                "upload_file": {
+                    "path": "/api/v1/upload/file",
+                    "method": "POST",
+                    "description": "Upload a file to a store"
+                },
+                "list_files": {
+                    "path": "/api/v1/upload/files/{store_name}",
+                    "method": "GET",
+                    "description": "List files in a store"
                 }
             }
         },
