@@ -10,18 +10,13 @@ from typing import Dict, List, Optional, Any
 # =============================================================================
 
 def get_gemini_client():
-    """Creates Vertex AI client with Application Default Credentials"""
-    project = os.getenv("GOOGLE_CLOUD_PROJECT")
-    location = os.getenv("GOOGLE_CLOUD_LOCATION")
+    """Creates Gemini client with API key (simple approach matching frontend)"""
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 
-    if not project or not location:
-        raise ValueError("GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION environment variables must be set")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY or GEMINI_API_KEY environment variable must be set")
 
-    return genai.Client(
-        vertexai=True,
-        project=project,
-        location=location
-    )
+    return genai.Client(api_key=api_key)
 
 # =============================================================================
 # Legacy Functions (kept for backward compatibility)
